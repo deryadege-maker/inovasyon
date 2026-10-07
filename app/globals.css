@@ -1,0 +1,38 @@
+@import "tailwindcss";
+
+@layer utilities {
+  @media print {
+    body {
+      background: #ffffff !important;
+      color: #000000 !important;
+    }
+    .no-print {
+      display: none !important;
+    }
+    .print-newspaper {
+      box-shadow: none !important;
+      border: 1px solid #000000 !important;
+      max-width: 100% !important;
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+  }
+}
+
+/* Vintage newsprint paper texture and column styling */
+.newspaper-columns {
+  column-count: 1;
+}
+
+@media (min-width: 768px) {
+  .newspaper-columns-2 {
+    column-count: 2;
+    column-gap: 2rem;
+    column-rule: 1px solid #d6cfc0;
+  }
+  .newspaper-columns-3 {
+    column-count: 3;
+    column-gap: 1.5rem;
+    column-rule: 1px solid #d6cfc0;
+  }
+}

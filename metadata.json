@@ -1,0 +1,6 @@
+{
+  "name": "İnovasyonun İzinde: Fikirden Devrime",
+  "description": "Teknoloji ve Tasarım dersi için tarihî inovasyon belgelerini inceleyen Tekno Muhabir, 1919 esintili dijital gazete ve sesli podcast hazırlama platformu.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
