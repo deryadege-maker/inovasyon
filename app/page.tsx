@@ -1,10 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Header from "@/components/Header";
 import DocumentsSection, { DocItem } from "@/components/DocumentsSection";
 import ReporterSection, { ReporterQA } from "@/components/ReporterSection";
 import PublishSection, { NewspaperData, PodcastData } from "@/components/PublishSection";
+import AuthModal, { AuthUser } from "@/components/AuthModal";
+import SaveProjectModal from "@/components/SaveProjectModal";
+import ProjectsListModal from "@/components/ProjectsListModal";
 import { SAMPLE_DOCUMENT_SETS } from "@/lib/sample-documents";
 import { 
   FileText, 
@@ -16,6 +19,12 @@ import {
 
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<"belgeler" | "muhabir" | "yayin">("belgeler");
+
+  // Kullanıcı ve oturum durumu
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isProjectsListOpen, setIsProjectsListOpen] = useState(false);
 
   // Varsayılan olarak 1919 Telgraf İnovasyonu belgeleriyle başlatılır
   const initialSet = SAMPLE_DOCUMENT_SETS[0];
@@ -31,6 +40,46 @@ export default function HomePage() {
   const [reporterHistory, setReporterHistory] = useState<ReporterQA[]>([]);
   const [newspaperData, setNewspaperData] = useState<NewspaperData | null>(null);
   const [podcastData, setPodcastData] = useState<PodcastData | null>(null);
+
+  // Sayfa yüklendiğinde oturum durumunu kontrol et
+  useEffect(() => {
+    fetch("/api/auth/me")
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.user) {
+          setUser(data.user);
+        }
+      })
+      .catch((err) => {
+        console.warn("Auth check failed:", err);
+      });
+  }, []);
+
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/auth/logout", { method: "POST" });
+      setUser(null);
+    } catch (err) {
+      console.warn("Logout error:", err);
+    }
+  };
+
+  const handleLoadProject = (
+    loadedDocs: DocItem[],
+    loadedNews: NewspaperData | null,
+    loadedPodcast: PodcastData | null
+  ) => {
+    if (loadedDocs && loadedDocs.length > 0) {
+      setDocuments(loadedDocs);
+    }
+    setNewspaperData(loadedNews);
+    setPodcastData(loadedPodcast);
+    if (loadedNews || loadedPodcast) {
+      setActiveTab("yayin");
+    } else {
+      setActiveTab("belgeler");
+    }
+  };
 
   // Güncel aktif belge kümesine ait örnek sorular
   const currentSampleQuestions =
@@ -48,6 +97,23 @@ export default function HomePage() {
         documentCount={documents.length}
         hasNewspaper={!!newspaperData}
         hasPodcast={!!podcastData}
+        user={user}
+        onOpenAuth={() => setIsAuthModalOpen(true)}
+        onOpenSaveProject={() => {
+          if (!user) {
+            setIsAuthModalOpen(true);
+          } else {
+            setIsSaveModalOpen(true);
+          }
+        }}
+        onOpenProjectsList={() => {
+          if (!user) {
+            setIsAuthModalOpen(true);
+          } else {
+            setIsProjectsListOpen(true);
+          }
+        }}
+        onLogout={handleLogout}
       />
 
       {/* Hero Bölümü (Yalnızca ilk sekmede zarifçe sergilenir) */}
@@ -80,7 +146,7 @@ export default function HomePage() {
               <span className="text-stone-400">→</span>
               <span className="flex items-center gap-1 bg-white/70 px-3 py-1 rounded-full border border-stone-200">
                 <Newspaper className="w-3.5 h-3.5 text-amber-800" />
-                <span>3. Gazete & Podcast Basılır</span>
+                <span>3. Gazete &amp; Podcast Basılır</span>
               </span>
             </div>
           </div>
@@ -122,6 +188,32 @@ export default function HomePage() {
         )}
       </main>
 
+      {/* Modallar */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        onSuccess={(newUser) => {
+          setUser(newUser);
+        }}
+      />
+
+      <SaveProjectModal
+        isOpen={isSaveModalOpen}
+        onClose={() => setIsSaveModalOpen(false)}
+        documents={documents}
+        newspaperData={newspaperData}
+        podcastData={podcastData}
+        onSaved={() => {
+          // Başarılı kayıt bildirimi
+        }}
+      />
+
+      <ProjectsListModal
+        isOpen={isProjectsListOpen}
+        onClose={() => setIsProjectsListOpen(false)}
+        onLoadProject={handleLoadProject}
+      />
+
       {/* Alt Bilgi / Footer */}
       <footer className="border-t border-amber-900/10 bg-[#f5f0e6] py-6 px-4 sm:px-6 text-center text-xs text-stone-600 no-print font-serif">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
@@ -134,7 +226,7 @@ export default function HomePage() {
           </div>
 
           <div className="text-[11px] text-stone-600">
-            Gemini 3.8 Flash • Türkçe Öğretim Materyali • Kişisel Veri Toplanmaz
+            Vercel Veritabanı &amp; Gemini 3.8 Flash • Türkçe Öğretim Materyali • Kişisel Öğrenci Verisi İstenmez
           </div>
         </div>
       </footer>
